@@ -1,47 +1,58 @@
 import time
 
 import cv2
+import pyttsx3
 
-from testapp.gpt.gpt_response import get_gpt
+from .gpt.gpt_response import get_gpt
 
 W = 640
 H = 480
-cap = cv2.VideoCapture()
-cap.open("http://192.168.0.6:4747/video")
-cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc("M", "J", "P", "G"))
-# cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y','U','Y','V'))
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, W)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, H)
-cap.set(cv2.CAP_PROP_FPS, 30)
 
 
-def show_frame(frame):
-    cv2.imshow("frame", frame)
+def ask_gpt(frame):
+    # cv2.imshow("frame", frame)
+    engine = pyttsx3.init(driverName="espeak")
+    engine.setProperty("rate", 200)
     _, buffer = cv2.imencode(".jpg", frame)
-    get_gpt(buffer.tobytes())
+    ans = get_gpt(buffer.tobytes())
+    engine.say(ans)
+    engine.runAndWait()
 
 
-# Initialize timing variables
-last_display_time = time.time()
-display_interval = 5  # interval in seconds
+def start_main():
+    cap = cv2.VideoCapture()
+    cap.open("http://192.168.0.6:4747/video")
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc("M", "J", "P", "G"))
+    # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('Y','U','Y','V'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, W)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, H)
+    cap.set(cv2.CAP_PROP_FPS, 30)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Error: Unable to retrieve frame.")
-        break
+    last_display_time = time.time()
+    display_interval = 10  # interval in seconds
 
-    current_time = time.time()
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Unable to retrieve frame.")
+            break
 
-    # Check if it's time to display a new frame
-    if current_time - last_display_time >= display_interval:
-        show_frame(frame)
-        last_display_time = current_time
+        current_time = time.time()
 
-    # Check for 'q' key to exit
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+        # Check if it's time to display a new frame
+        if current_time - last_display_time >= display_interval:
+            ask_gpt(frame)
+            last_display_time = current_time
 
-# Release resources and close windows
-cap.release()
-cv2.destroyAllWindows()
+        # Check for 'q' key to exit
+        if cv2.waitKey(1) & 0xFF == ord("q"):
+            break
+
+    # Release resources and close windows
+    cap.release()
+    cv2.destroyAllWindows()
+    return 0
+
+
+if __name__ == "__main__":
+    start_main()

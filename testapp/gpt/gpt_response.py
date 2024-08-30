@@ -3,7 +3,8 @@ import json
 
 import boto3
 from botocore.exceptions import ClientError
-from gpt.propmts import system_prompt, user_prompt
+
+from .propmts import system_prompt, user_prompt
 
 
 def encode_image(image_path):
@@ -21,7 +22,7 @@ def get_gpt(frame):
     body = json.dumps(
         {
             "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 10,
+            "max_tokens": 50,
             "temperature": 0.0,
             "system": system_prompt,
             "messages": [
@@ -55,6 +56,7 @@ def get_gpt(frame):
     response_body = json.loads(response.get("body").read())
     response_text = response_body["content"][0]["text"]
     print(response_text)
+    return response_text
 
 
 if __name__ == "__main__":
